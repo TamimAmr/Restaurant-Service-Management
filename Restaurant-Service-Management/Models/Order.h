@@ -1,6 +1,9 @@
 #pragma once
 
 #include <iostream>
+#include "Chef.h"
+#include "Scooter.h"
+#include "Table.h"
 
 using namespace std;
 
@@ -62,21 +65,21 @@ public:
         cout << ID << "(" << t << ")";
         if (AssignedChef)
         {
-            cout << "[";
+            cout << '[';
             AssignedChef->Print();
-            cout << "]";
+            cout << ']';
         }
         if (AssignedScooter)
         {
-            cout << "[";
+            cout << '[';
             AssignedScooter->Print();
-            cout << "]";
+            cout << ']';
         }
         if (AssignedTable)
         {
-            cout << "[";
+            cout << '[';
             AssignedTable->Print();
-            cout << "]";
+            cout << ']';
         }
     }
 };
