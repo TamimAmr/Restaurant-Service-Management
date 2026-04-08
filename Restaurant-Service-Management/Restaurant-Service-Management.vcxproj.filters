@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{e1068a80-b1fc-46dc-b173-490cd7ced2e1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\DataStructures">
+      <UniqueIdentifier>{be69ff4e-516f-4f85-b7b5-2374053ffef8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\DataStructures\Base">
+      <UniqueIdentifier>{4ce189da-1938-42ff-8963-81ebedbc2577}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\DataStructures\Derived">
+      <UniqueIdentifier>{91460280-cd79-4b7c-850e-6d56946d02d9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Models">
+      <UniqueIdentifier>{7a7bf6e9-0bcf-4406-8ff1-5ea4c9ec8745}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Restaurant">
+      <UniqueIdentifier>{9a7c9fdc-a827-4d86-b34d-3d2e9008ca1b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{b316a2ac-93a2-47d4-9ccd-cb7ab3397e58}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\DataStructures">
+      <UniqueIdentifier>{f19dc132-6057-45c0-9b2f-da5bd7d43a6c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Main">
+      <UniqueIdentifier>{9b98743b-294a-42db-9034-efcde9063011}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Restaurant">
+      <UniqueIdentifier>{d3095163-95d3-4918-b642-025577078715}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="DataStructures\Fit_Tables.cpp">
+      <Filter>Source Files\DataStructures</Filter>
+    </ClCompile>
+    <ClCompile Include="DataStructures\Pend_OVC.cpp">
+      <Filter>Source Files\DataStructures</Filter>
+    </ClCompile>
+    <ClCompile Include="DataStructures\RDY_OV.cpp">
+      <Filter>Source Files\DataStructures</Filter>
+    </ClCompile>
+    <ClCompile Include="Main\main.cpp">
+      <Filter>Source Files\Main</Filter>
+    </ClCompile>
+    <ClCompile Include="Restaurant\Restaurant.cpp">
+      <Filter>Source Files\Restaurant</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="DataStructures\ArrayStack.h">
+      <Filter>Header Files\DataStructures\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="DataStructures\LinkedQueue.h">
+      <Filter>Header Files\DataStructures\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="DataStructures\Node.h">
+      <Filter>Header Files\DataStructures\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="DataStructures\priNode.h">
+      <Filter>Header Files\DataStructures\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="DataStructures\priQueue.h">
+      <Filter>Header Files\DataStructures\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="DataStructures\QueueADT.h">
+      <Filter>Header Files\DataStructures\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="DataStructures\StackADT.h">
+      <Filter>Header Files\DataStructures\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="DataStructures\Fit_Tables.h">
+      <Filter>Header Files\DataStructures\Derived</Filter>
+    </ClInclude>
+    <ClInclude Include="DataStructures\Pend_OVC.h">
+      <Filter>Header Files\DataStructures\Derived</Filter>
+    </ClInclude>
+    <ClInclude Include="DataStructures\RDY_OV.h">
+      <Filter>Header Files\DataStructures\Derived</Filter>
+    </ClInclude>
+    <ClInclude Include="Models\Chef.h">
+      <Filter>Header Files\Models</Filter>
+    </ClInclude>
+    <ClInclude Include="Models\Order.h">
+      <Filter>Header Files\Models</Filter>
+    </ClInclude>
+    <ClInclude Include="Models\Scooter.h">
+      <Filter>Header Files\Models</Filter>
+    </ClInclude>
+    <ClInclude Include="Models\Table.h">
+      <Filter>Header Files\Models</Filter>
+    </ClInclude>
+    <ClInclude Include="Restaurant\Restaurant.h">
+      <Filter>Header Files\Restaurant</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
