@@ -1,6 +1,8 @@
 #include <iostream>
 #include <cstdlib>
 #include <ctime>
+#include <thread>
+#include <chrono>
 
 #include "../DataStructures/ArrayStack.h"
 #include "../DataStructures/Fit_Tables.h"
@@ -136,9 +138,12 @@ static void RandomSimulator()
     srand((unsigned)time(nullptr));
 
     const int TOTAL_ORDERS = 500;
-    const int PRINT_EVERY = 10;        // print once every N timesteps
-    const int FULL_PRINT_EVERY = 50;   // full lists occasionally
-    const int MAX_TIMESTEPS = 5000;    // safety stop for debugging
+    // Printing too frequently makes the console look "infinite".
+    // Keep output readable by printing rarely + throttling.
+    const int PRINT_EVERY = 200;       // print once every N timesteps
+    const int FULL_PRINT_EVERY = 0;    // set to 0 to disable full list dumps
+    const int MAX_TIMESTEPS = 20000;   // safety stop to guarantee termination
+    const int PRINT_SLEEP_MS = 200;    // slow down prints so you can read
 
     // Pending orders
     LinkedQueue<Order*> PEND_ODG;
@@ -244,9 +249,11 @@ static void RandomSimulator()
         timestep++;
         if (timestep > MAX_TIMESTEPS)
         {
-            cout << "\nStopped at MAX_TIMESTEPS=" << MAX_TIMESTEPS
+            cout << "\n\n==================== SAFETY STOP ====================\n";
+            cout << "Stopped at MAX_TIMESTEPS=" << MAX_TIMESTEPS
                  << " (fin+canc=" << (Finished_orders.getCount() + Cancelled_orders.getCount())
                  << "/" << TOTAL_ORDERS << ").\n";
+            cout << "=====================================================\n\n";
             break;
         }
 
@@ -544,9 +551,12 @@ static void RandomSimulator()
                 Free_Tables,
                 Cancelled_orders,
                 Finished_orders);
+
+            if (PRINT_SLEEP_MS > 0)
+                std::this_thread::sleep_for(std::chrono::milliseconds(PRINT_SLEEP_MS));
         }
 
-        if (timestep % FULL_PRINT_EVERY == 0)
+        if (FULL_PRINT_EVERY > 0 && (timestep % FULL_PRINT_EVERY == 0))
         {
             PrintAllLists(
                 timestep,
@@ -572,6 +582,9 @@ static void RandomSimulator()
                 Free_Tables,
                 Cancelled_orders,
                 Finished_orders);
+
+            if (PRINT_SLEEP_MS > 0)
+                std::this_thread::sleep_for(std::chrono::milliseconds(PRINT_SLEEP_MS));
         }
     }
 
