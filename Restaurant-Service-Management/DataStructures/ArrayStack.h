@@ -9,7 +9,8 @@ using namespace std;
 template <typename T>
 class ArrayStack : public StackADT<T>
 {
-    enum { MAX_SIZE = 100 };
+    // The simulator can generate 500+ orders; the stack must hold that many pointers.
+    enum { MAX_SIZE = 2000 };
 
 protected:
     T items[MAX_SIZE];
