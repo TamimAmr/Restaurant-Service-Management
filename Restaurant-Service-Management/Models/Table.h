@@ -33,3 +33,10 @@ public:
         cout << "T" << ID << "[" << seats << "]";
     }
 };
+
+inline ostream& operator<<(ostream& out, const Table* t)
+{
+    if (!t)
+        return out << "NULL";
+    return out << "T" << t->GetID() << "[" << t->GetSeats() << "]";
+}

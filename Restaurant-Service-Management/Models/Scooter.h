@@ -17,3 +17,10 @@ public:
         cout << "S" << ID;
     }
 };
+
+inline ostream& operator<<(ostream& out, const Scooter* s)
+{
+    if (!s)
+        return out << "NULL";
+    return out << "S" << s->GetID();
+}

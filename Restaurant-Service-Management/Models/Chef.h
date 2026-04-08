@@ -19,3 +19,10 @@ public:
         cout << (Senior ? "CS" : "CN") << ID;
     }
 };
+
+inline ostream& operator<<(ostream& out, const Chef* c)
+{
+    if (!c)
+        return out << "NULL";
+    return out << (c->IsSenior() ? "CS" : "CN") << c->GetID();
+}

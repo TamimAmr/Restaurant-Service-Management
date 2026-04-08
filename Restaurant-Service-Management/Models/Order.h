@@ -62,3 +62,11 @@ public:
         cout << ID << "(" << t << ")";
     }
 };
+
+inline ostream& operator<<(ostream& out, const Order* o)
+{
+    if (!o)
+        return out << "NULL";
+    const char* t = (o->GetType() == Order::OT) ? "OT" : (o->GetType() == Order::OV) ? "OV" : "OD";
+    return out << o->GetID() << "(" << t << ")";
+}
