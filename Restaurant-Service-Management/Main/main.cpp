@@ -1,7 +1,6 @@
 #include <iostream>
 #include <cstdlib>
 #include <ctime>
-#include <conio.h>
 
 #include "../DataStructures/ArrayStack.h"
 #include "../DataStructures/Fit_Tables.h"
@@ -467,10 +466,6 @@ static void RandomSimulator()
             Free_Tables,
             Cancelled_orders,
             Finished_orders);
-
-        cout << "\nPRESS ANY KEY TO MOVE TO NEXT STEP!";
-        _getch();
-        cout << "\n";
     }
 }
 
