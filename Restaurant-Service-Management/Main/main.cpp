@@ -138,14 +138,11 @@ static void RandomSimulator()
     srand((unsigned)time(nullptr));
 
     const int TOTAL_ORDERS = 500;
-    // Printing too frequently makes the console look "infinite".
-    // Keep output readable by printing rarely + throttling.
-    const int PRINT_EVERY = 200;       // print once every N timesteps
-    const int FULL_PRINT_EVERY = 0;    // set to 0 to disable full list dumps
-    const int MAX_TIMESTEPS = 20000;   // safety stop to guarantee termination
-    const int PRINT_SLEEP_MS = 200;    // slow down prints so you can read
+    const int PRINT_EVERY = 200;
+    const int FULL_PRINT_EVERY = 0;
+    const int MAX_TIMESTEPS = 20000;
+    const int PRINT_SLEEP_MS = 200;
 
-    // Pending orders
     LinkedQueue<Order*> PEND_ODG;
     LinkedQueue<Order*> PEND_ODN;
     LinkedQueue<Order*> PEND_OT;
@@ -153,36 +150,28 @@ static void RandomSimulator()
     Pend_OVC PEND_OVC;
     priQueue<Order*> PEND_OVG;
 
-    // Free chefs
     LinkedQueue<Chef*> Free_CS;
     LinkedQueue<Chef*> Free_CN;
 
-    // Cooking
     LinkedQueue<Order*> Cooking_OT;
     LinkedQueue<Order*> Cooking_OD;
-    Pend_OVC Cooking_OVC; // reuse CancelOrder logic
+    Pend_OVC Cooking_OVC;
 
-    // Ready
     LinkedQueue<Order*> RDY_OT;
-    RDY_OV RDY_OVC;       // reuse CancelOrder logic
+    RDY_OV RDY_OVC;
     LinkedQueue<Order*> RDY_OD;
 
-    // In-service
     priQueue<Order*> InServ_Orders;
 
-    // Scooters
     priQueue<Scooter*> Free_Scooters;
     priQueue<Scooter*> Back_Scooters;
     LinkedQueue<Scooter*> Maint_Scooters;
 
-    // Tables
     Fit_Tables Free_Tables;
 
-    // History
     LinkedQueue<Order*> Cancelled_orders;
     ArrayStack<Order*> Finished_orders;
 
-    // Init chefs
     const int NUM_SENIOR = 15;
     const int NUM_NORMAL = 35;
     int chefId = 1;
@@ -191,7 +180,6 @@ static void RandomSimulator()
     for (int i = 0; i < NUM_NORMAL; i++)
         Free_CN.enqueue(new Chef(chefId++, false));
 
-    // Init scooters
     const int NUM_SCOOTERS = 25;
     for (int i = 1; i <= NUM_SCOOTERS; i++)
     {
@@ -199,7 +187,6 @@ static void RandomSimulator()
         Free_Scooters.enqueue(s, RandInt(1, 100));
     }
 
-    // Init tables
     const int NUM_TABLES = 40;
     for (int i = 1; i <= NUM_TABLES; i++)
     {
@@ -208,7 +195,6 @@ static void RandomSimulator()
         Free_Tables.enqueue(t, -t->GetSeats());
     }
 
-    // Generate orders and distribute on pending lists
     for (int id = 1; id <= TOTAL_ORDERS; id++)
     {
         int typePick = RandInt(1, 100);
@@ -231,9 +217,9 @@ static void RandomSimulator()
             else
                 PEND_ODN.enqueue(o);
         }
-        else // OV
+        else
         {
-            int sub = RandInt(1, 3); // N / C / G
+            int sub = RandInt(1, 3);
             if (sub == 1)
                 PEND_OVN.enqueue(o);
             else if (sub == 2)
@@ -257,10 +243,8 @@ static void RandomSimulator()
             break;
         }
 
-        // 3.1 Repeat 30 times: move from pending -> cooking with random chef
         for (int k = 0; k < 30; k++)
         {
-            // Pick a non-empty pending list
             int tries = 0;
             bool moved = false;
             while (tries++ < 10 && !moved)
@@ -286,7 +270,6 @@ static void RandomSimulator()
                 else
                     continue;
 
-                // pick a random chef (top of a random free list)
                 Chef* c = nullptr;
                 bool gotChef = false;
                 if (Chance(50))
@@ -306,7 +289,6 @@ static void RandomSimulator()
 
                 if (!gotChef)
                 {
-                    // no chef available, return order back to a reasonable pending list
                     if (o->GetType() == Order::OT)
                         PEND_OT.enqueue(o);
                     else if (o->GetType() == Order::OD)
@@ -329,7 +311,6 @@ static void RandomSimulator()
             }
         }
 
-        // 3.2 With probability 75%: 15 times move cooking -> ready, release chef
         if (Chance(75))
         {
             for (int k = 0; k < 15; k++)
@@ -349,7 +330,6 @@ static void RandomSimulator()
                     else
                         continue;
 
-                    // release chef
                     Chef* c = o->GetChef();
                     if (c)
                     {
@@ -360,7 +340,6 @@ static void RandomSimulator()
                         o->SetChef(nullptr);
                     }
 
-                    // move to ready
                     if (o->GetType() == Order::OT)
                         RDY_OT.enqueue(o);
                     else if (o->GetType() == Order::OD)
@@ -373,7 +352,6 @@ static void RandomSimulator()
             }
         }
 
-        // 3.3 Repeat 10 times: move ready -> finish or in-service (assign scooter/table)
         for (int k = 0; k < 10; k++)
         {
             int tries = 0;
@@ -407,12 +385,11 @@ static void RandomSimulator()
                     }
                     else
                     {
-                        // no scooter, return to ready
                         RDY_OVC.enqueue(o);
                     }
                     break;
                 }
-                else // OD
+                else
                 {
                     Table* t = nullptr;
                     int needed = o->GetSeatsNeeded();
@@ -426,7 +403,6 @@ static void RandomSimulator()
                     }
                     else
                     {
-                        // no table, return to ready
                         RDY_OD.enqueue(o);
                     }
                     break;
@@ -434,7 +410,6 @@ static void RandomSimulator()
             }
         }
 
-        // 3.4 Cancel from pending OVC -> cancelled
         {
             int randomID = RandInt(1001, 1000 + TOTAL_ORDERS);
             Order* removed = nullptr;
@@ -442,7 +417,6 @@ static void RandomSimulator()
                 Cancelled_orders.enqueue(removed);
         }
 
-        // 3.5 Cancel from ready OVC -> cancelled
         {
             int randomID = RandInt(1001, 1000 + TOTAL_ORDERS);
             Order* removed = nullptr;
@@ -450,7 +424,6 @@ static void RandomSimulator()
                 Cancelled_orders.enqueue(removed);
         }
 
-        // 3.6 Cancel from cooking OV -> cancelled and release chef
         {
             int randomID = RandInt(1001, 1000 + TOTAL_ORDERS);
             Order* removed = nullptr;
@@ -469,10 +442,6 @@ static void RandomSimulator()
             }
         }
 
-        // 3.7 With probability 25%: in-service -> finish and return scooter/table
-        // NOTE: Doing a single attempt per timestep makes the backlog grow quickly.
-        // To keep the simulator terminating (while still using 25% probability),
-        // we do multiple independent attempts.
         for (int attempt = 0; attempt < 10; attempt++)
         {
             if (!Chance(25))
@@ -504,7 +473,6 @@ static void RandomSimulator()
             Finished_orders.push(o);
         }
 
-        // 3.8 With probability 50%: scooter from back -> free or maintenance
         if (Chance(50))
         {
             Scooter* s = nullptr;
@@ -518,7 +486,6 @@ static void RandomSimulator()
             }
         }
 
-        // 3.9 With probability 50%: scooter from maintenance -> free
         if (Chance(50))
         {
             Scooter* s = nullptr;
@@ -526,7 +493,6 @@ static void RandomSimulator()
                 Free_Scooters.enqueue(s, RandInt(1, 100));
         }
 
-        // 3.10 Interface print
         if (timestep % PRINT_EVERY == 0 || timestep == 1)
         {
             PrintCountsOnly(
