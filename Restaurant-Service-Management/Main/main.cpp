@@ -1,6 +1,8 @@
 #include <iostream>
 #include <cstdlib>
 #include <ctime>
+#include <thread>
+#include <chrono>
 
 #include "../DataStructures/ArrayStack.h"
 #include "../DataStructures/Fit_Tables.h"
@@ -95,11 +97,53 @@ static void PrintAllLists(
     cout << "FINISH: "; Finished_orders.Print(); cout << "\n";
 }
 
+static void PrintCountsOnly(
+    int timestep,
+    int totalGenerated,
+    const LinkedQueue<Order*>& PEND_ODG,
+    const LinkedQueue<Order*>& PEND_ODN,
+    const LinkedQueue<Order*>& PEND_OT,
+    const LinkedQueue<Order*>& PEND_OVN,
+    const Pend_OVC& PEND_OVC,
+    const priQueue<Order*>& PEND_OVG,
+    const LinkedQueue<Order*>& Cooking_OT,
+    const LinkedQueue<Order*>& Cooking_OD,
+    const Pend_OVC& Cooking_OVC,
+    const LinkedQueue<Order*>& RDY_OT,
+    const RDY_OV& RDY_OVC,
+    const LinkedQueue<Order*>& RDY_OD,
+    const priQueue<Order*>& InServ_Orders,
+    const priQueue<Scooter*>& Free_Scooters,
+    const priQueue<Scooter*>& Back_Scooters,
+    const LinkedQueue<Scooter*>& Maint_Scooters,
+    const Fit_Tables& Free_Tables,
+    const LinkedQueue<Order*>& Cancelled_orders,
+    const ArrayStack<Order*>& Finished_orders)
+{
+    cout << "t=" << timestep
+         << " gen=" << totalGenerated
+         << " fin=" << Finished_orders.getCount()
+         << " canc=" << Cancelled_orders.getCount()
+         << " | PEND(" << (PEND_ODG.getCount() + PEND_ODN.getCount() + PEND_OT.getCount() + PEND_OVN.getCount() + PEND_OVC.getCount() + PEND_OVG.getCount())
+         << ") COOK(" << (Cooking_OT.getCount() + Cooking_OD.getCount() + Cooking_OVC.getCount())
+         << ") RDY(" << (RDY_OT.getCount() + RDY_OVC.getCount() + RDY_OD.getCount())
+         << ") INS(" << InServ_Orders.getCount()
+         << ") | Scooters F/B/M=" << Free_Scooters.getCount() << "/" << Back_Scooters.getCount() << "/" << Maint_Scooters.getCount()
+         << " | Tables Free=" << Free_Tables.getCount()
+         << "\n";
+}
+
 static void RandomSimulator()
 {
     srand((unsigned)time(nullptr));
 
     const int TOTAL_ORDERS = 500;
+    // Printing too frequently makes the console look "infinite".
+    // Keep output readable by printing rarely + throttling.
+    const int PRINT_EVERY = 200;       // print once every N timesteps
+    const int FULL_PRINT_EVERY = 0;    // set to 0 to disable full list dumps
+    const int MAX_TIMESTEPS = 20000;   // safety stop to guarantee termination
+    const int PRINT_SLEEP_MS = 200;    // slow down prints so you can read
 
     // Pending orders
     LinkedQueue<Order*> PEND_ODG;
@@ -203,6 +247,15 @@ static void RandomSimulator()
     while (Finished_orders.getCount() + Cancelled_orders.getCount() < TOTAL_ORDERS)
     {
         timestep++;
+        if (timestep > MAX_TIMESTEPS)
+        {
+            cout << "\n\n==================== SAFETY STOP ====================\n";
+            cout << "Stopped at MAX_TIMESTEPS=" << MAX_TIMESTEPS
+                 << " (fin+canc=" << (Finished_orders.getCount() + Cancelled_orders.getCount())
+                 << "/" << TOTAL_ORDERS << ").\n";
+            cout << "=====================================================\n\n";
+            break;
+        }
 
         // 3.1 Repeat 30 times: move from pending -> cooking with random chef
         for (int k = 0; k < 30; k++)
@@ -276,48 +329,47 @@ static void RandomSimulator()
             }
         }
 
-        // 3.2 Repeat 15 times:
-        // With probability 75%, pick a random order from cooking lists and move it to ready lists (release chef).
-        for (int k = 0; k < 15; k++)
+        // 3.2 With probability 75%: 15 times move cooking -> ready, release chef
+        if (Chance(75))
         {
-            if (!Chance(75))
-                continue;
-
-            int tries = 0;
-            bool moved = false;
-            while (tries++ < 10 && !moved)
+            for (int k = 0; k < 15; k++)
             {
-                int choice = RandInt(1, 3);
-                Order* o = nullptr;
-                if (choice == 1 && !Cooking_OT.isEmpty())
-                    Cooking_OT.dequeue(o);
-                else if (choice == 2 && !Cooking_OD.isEmpty())
-                    Cooking_OD.dequeue(o);
-                else if (choice == 3 && !Cooking_OVC.isEmpty())
-                    Cooking_OVC.dequeue(o);
-                else
-                    continue;
-
-                // release chef
-                Chef* c = o->GetChef();
-                if (c)
+                int tries = 0;
+                bool moved = false;
+                while (tries++ < 10 && !moved)
                 {
-                    if (c->IsSenior())
-                        Free_CS.enqueue(c);
+                    int choice = RandInt(1, 3);
+                    Order* o = nullptr;
+                    if (choice == 1 && !Cooking_OT.isEmpty())
+                        Cooking_OT.dequeue(o);
+                    else if (choice == 2 && !Cooking_OD.isEmpty())
+                        Cooking_OD.dequeue(o);
+                    else if (choice == 3 && !Cooking_OVC.isEmpty())
+                        Cooking_OVC.dequeue(o);
                     else
-                        Free_CN.enqueue(c);
-                    o->SetChef(nullptr);
+                        continue;
+
+                    // release chef
+                    Chef* c = o->GetChef();
+                    if (c)
+                    {
+                        if (c->IsSenior())
+                            Free_CS.enqueue(c);
+                        else
+                            Free_CN.enqueue(c);
+                        o->SetChef(nullptr);
+                    }
+
+                    // move to ready
+                    if (o->GetType() == Order::OT)
+                        RDY_OT.enqueue(o);
+                    else if (o->GetType() == Order::OD)
+                        RDY_OD.enqueue(o);
+                    else
+                        RDY_OVC.enqueue(o);
+
+                    moved = true;
                 }
-
-                // move to ready
-                if (o->GetType() == Order::OT)
-                    RDY_OT.enqueue(o);
-                else if (o->GetType() == Order::OD)
-                    RDY_OD.enqueue(o);
-                else
-                    RDY_OVC.enqueue(o);
-
-                moved = true;
             }
         }
 
@@ -417,34 +469,39 @@ static void RandomSimulator()
             }
         }
 
-        // 3.7 With probability 25%: pick the top order from in-service -> finish and return scooter/table
-        if (Chance(25))
+        // 3.7 With probability 25%: in-service -> finish and return scooter/table
+        // NOTE: Doing a single attempt per timestep makes the backlog grow quickly.
+        // To keep the simulator terminating (while still using 25% probability),
+        // we do multiple independent attempts.
+        for (int attempt = 0; attempt < 10; attempt++)
         {
+            if (!Chance(25))
+                continue;
+
             Order* o = nullptr;
             int pri = 0;
-            if (InServ_Orders.dequeue(o, pri) && o)
-            {
-                if (o->GetType() == Order::OV)
-                {
-                    Scooter* s = o->GetScooter();
-                    if (s)
-                    {
-                        o->SetScooter(nullptr);
-                        Back_Scooters.enqueue(s, RandInt(1, 100));
-                    }
-                }
-                else if (o->GetType() == Order::OD)
-                {
-                    Table* t = o->GetTable();
-                    if (t)
-                    {
-                        o->SetTable(nullptr);
-                        Free_Tables.enqueue(t, -t->GetSeats());
-                    }
-                }
+            if (!(InServ_Orders.dequeue(o, pri) && o))
+                break;
 
-                Finished_orders.push(o);
+            if (o->GetType() == Order::OV)
+            {
+                Scooter* s = o->GetScooter();
+                if (s)
+                {
+                    o->SetScooter(nullptr);
+                    Back_Scooters.enqueue(s, RandInt(1, 100));
+                }
             }
+            else if (o->GetType() == Order::OD)
+            {
+                Table* t = o->GetTable();
+                if (t)
+                {
+                    o->SetTable(nullptr);
+                    Free_Tables.enqueue(t, -t->GetSeats());
+                }
+            }
+            Finished_orders.push(o);
         }
 
         // 3.8 With probability 50%: scooter from back -> free or maintenance
@@ -469,31 +526,66 @@ static void RandomSimulator()
                 Free_Scooters.enqueue(s, RandInt(1, 100));
         }
 
-        // 3.10 Interface (print all lists each timestep)
-        PrintAllLists(
-            timestep,
-            TOTAL_ORDERS,
-            PEND_ODG,
-            PEND_ODN,
-            PEND_OT,
-            PEND_OVN,
-            PEND_OVC,
-            PEND_OVG,
-            Free_CS,
-            Free_CN,
-            Cooking_OVC,
-            Cooking_OT,
-            Cooking_OD,
-            RDY_OT,
-            RDY_OVC,
-            RDY_OD,
-            InServ_Orders,
-            Free_Scooters,
-            Back_Scooters,
-            Maint_Scooters,
-            Free_Tables,
-            Cancelled_orders,
-            Finished_orders);
+        // 3.10 Interface print
+        if (timestep % PRINT_EVERY == 0 || timestep == 1)
+        {
+            PrintCountsOnly(
+                timestep,
+                TOTAL_ORDERS,
+                PEND_ODG,
+                PEND_ODN,
+                PEND_OT,
+                PEND_OVN,
+                PEND_OVC,
+                PEND_OVG,
+                Cooking_OT,
+                Cooking_OD,
+                Cooking_OVC,
+                RDY_OT,
+                RDY_OVC,
+                RDY_OD,
+                InServ_Orders,
+                Free_Scooters,
+                Back_Scooters,
+                Maint_Scooters,
+                Free_Tables,
+                Cancelled_orders,
+                Finished_orders);
+
+            if (PRINT_SLEEP_MS > 0)
+                std::this_thread::sleep_for(std::chrono::milliseconds(PRINT_SLEEP_MS));
+        }
+
+        if (FULL_PRINT_EVERY > 0 && (timestep % FULL_PRINT_EVERY == 0))
+        {
+            PrintAllLists(
+                timestep,
+                TOTAL_ORDERS,
+                PEND_ODG,
+                PEND_ODN,
+                PEND_OT,
+                PEND_OVN,
+                PEND_OVC,
+                PEND_OVG,
+                Free_CS,
+                Free_CN,
+                Cooking_OVC,
+                Cooking_OT,
+                Cooking_OD,
+                RDY_OT,
+                RDY_OVC,
+                RDY_OD,
+                InServ_Orders,
+                Free_Scooters,
+                Back_Scooters,
+                Maint_Scooters,
+                Free_Tables,
+                Cancelled_orders,
+                Finished_orders);
+
+            if (PRINT_SLEEP_MS > 0)
+                std::this_thread::sleep_for(std::chrono::milliseconds(PRINT_SLEEP_MS));
+        }
     }
 
     cout << "\nSimulation ended after " << timestep << " timesteps.\n";
