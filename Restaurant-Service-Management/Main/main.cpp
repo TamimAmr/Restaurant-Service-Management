@@ -1,8 +1,6 @@
 #include <iostream>
 #include <cstdlib>
 #include <ctime>
-#include <thread>
-#include <chrono>
 
 #include "../DataStructures/ArrayStack.h"
 #include "../DataStructures/Fit_Tables.h"
@@ -97,51 +95,11 @@ static void PrintAllLists(
     cout << "FINISH: "; Finished_orders.Print(); cout << "\n";
 }
 
-static void PrintCountsOnly(
-    int timestep,
-    int totalGenerated,
-    const LinkedQueue<Order*>& PEND_ODG,
-    const LinkedQueue<Order*>& PEND_ODN,
-    const LinkedQueue<Order*>& PEND_OT,
-    const LinkedQueue<Order*>& PEND_OVN,
-    const Pend_OVC& PEND_OVC,
-    const priQueue<Order*>& PEND_OVG,
-    const LinkedQueue<Order*>& Cooking_OT,
-    const LinkedQueue<Order*>& Cooking_OD,
-    const Pend_OVC& Cooking_OVC,
-    const LinkedQueue<Order*>& RDY_OT,
-    const RDY_OV& RDY_OVC,
-    const LinkedQueue<Order*>& RDY_OD,
-    const priQueue<Order*>& InServ_Orders,
-    const priQueue<Scooter*>& Free_Scooters,
-    const priQueue<Scooter*>& Back_Scooters,
-    const LinkedQueue<Scooter*>& Maint_Scooters,
-    const Fit_Tables& Free_Tables,
-    const LinkedQueue<Order*>& Cancelled_orders,
-    const ArrayStack<Order*>& Finished_orders)
-{
-    cout << "t=" << timestep
-         << " gen=" << totalGenerated
-         << " fin=" << Finished_orders.getCount()
-         << " canc=" << Cancelled_orders.getCount()
-         << " | PEND(" << (PEND_ODG.getCount() + PEND_ODN.getCount() + PEND_OT.getCount() + PEND_OVN.getCount() + PEND_OVC.getCount() + PEND_OVG.getCount())
-         << ") COOK(" << (Cooking_OT.getCount() + Cooking_OD.getCount() + Cooking_OVC.getCount())
-         << ") RDY(" << (RDY_OT.getCount() + RDY_OVC.getCount() + RDY_OD.getCount())
-         << ") INS(" << InServ_Orders.getCount()
-         << ") | Scooters F/B/M=" << Free_Scooters.getCount() << "/" << Back_Scooters.getCount() << "/" << Maint_Scooters.getCount()
-         << " | Tables Free=" << Free_Tables.getCount()
-         << "\n";
-}
-
 static void RandomSimulator()
 {
     srand((unsigned)time(nullptr));
 
     const int TOTAL_ORDERS = 500;
-    const int PRINT_EVERY = 200;
-    const int FULL_PRINT_EVERY = 0;
-    const int MAX_TIMESTEPS = 20000;
-    const int PRINT_SLEEP_MS = 200;
 
     LinkedQueue<Order*> PEND_ODG;
     LinkedQueue<Order*> PEND_ODN;
@@ -233,15 +191,6 @@ static void RandomSimulator()
     while (Finished_orders.getCount() + Cancelled_orders.getCount() < TOTAL_ORDERS)
     {
         timestep++;
-        if (timestep > MAX_TIMESTEPS)
-        {
-            cout << "\n\n==================== SAFETY STOP ====================\n";
-            cout << "Stopped at MAX_TIMESTEPS=" << MAX_TIMESTEPS
-                 << " (fin+canc=" << (Finished_orders.getCount() + Cancelled_orders.getCount())
-                 << "/" << TOTAL_ORDERS << ").\n";
-            cout << "=====================================================\n\n";
-            break;
-        }
 
         for (int k = 0; k < 30; k++)
         {
@@ -493,68 +442,31 @@ static void RandomSimulator()
                 Free_Scooters.enqueue(s, RandInt(1, 100));
         }
 
-        if (timestep % PRINT_EVERY == 0 || timestep == 1)
-        {
-            PrintCountsOnly(
-                timestep,
-                TOTAL_ORDERS,
-                PEND_ODG,
-                PEND_ODN,
-                PEND_OT,
-                PEND_OVN,
-                PEND_OVC,
-                PEND_OVG,
-                Cooking_OT,
-                Cooking_OD,
-                Cooking_OVC,
-                RDY_OT,
-                RDY_OVC,
-                RDY_OD,
-                InServ_Orders,
-                Free_Scooters,
-                Back_Scooters,
-                Maint_Scooters,
-                Free_Tables,
-                Cancelled_orders,
-                Finished_orders);
-
-            if (PRINT_SLEEP_MS > 0)
-                std::this_thread::sleep_for(std::chrono::milliseconds(PRINT_SLEEP_MS));
-        }
-
-        if (FULL_PRINT_EVERY > 0 && (timestep % FULL_PRINT_EVERY == 0))
-        {
-            PrintAllLists(
-                timestep,
-                TOTAL_ORDERS,
-                PEND_ODG,
-                PEND_ODN,
-                PEND_OT,
-                PEND_OVN,
-                PEND_OVC,
-                PEND_OVG,
-                Free_CS,
-                Free_CN,
-                Cooking_OVC,
-                Cooking_OT,
-                Cooking_OD,
-                RDY_OT,
-                RDY_OVC,
-                RDY_OD,
-                InServ_Orders,
-                Free_Scooters,
-                Back_Scooters,
-                Maint_Scooters,
-                Free_Tables,
-                Cancelled_orders,
-                Finished_orders);
-
-            if (PRINT_SLEEP_MS > 0)
-                std::this_thread::sleep_for(std::chrono::milliseconds(PRINT_SLEEP_MS));
-        }
+        PrintAllLists(
+            timestep,
+            TOTAL_ORDERS,
+            PEND_ODG,
+            PEND_ODN,
+            PEND_OT,
+            PEND_OVN,
+            PEND_OVC,
+            PEND_OVG,
+            Free_CS,
+            Free_CN,
+            Cooking_OVC,
+            Cooking_OT,
+            Cooking_OD,
+            RDY_OT,
+            RDY_OVC,
+            RDY_OD,
+            InServ_Orders,
+            Free_Scooters,
+            Back_Scooters,
+            Maint_Scooters,
+            Free_Tables,
+            Cancelled_orders,
+            Finished_orders);
     }
-
-    cout << "\nSimulation ended after " << timestep << " timesteps.\n";
 }
 
 int main()
