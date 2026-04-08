@@ -60,6 +60,24 @@ public:
     {
         const char* t = (Type == OT) ? "OT" : (Type == OV) ? "OV" : "OD";
         cout << ID << "(" << t << ")";
+        if (AssignedChef)
+        {
+            cout << "[";
+            AssignedChef->Print();
+            cout << "]";
+        }
+        if (AssignedScooter)
+        {
+            cout << "[";
+            AssignedScooter->Print();
+            cout << "]";
+        }
+        if (AssignedTable)
+        {
+            cout << "[";
+            AssignedTable->Print();
+            cout << "]";
+        }
     }
 };
 
